@@ -1,18 +1,17 @@
 ###在kubernetes中搭建LNMP环境，并安装ecshop
 
-说明： 本文档为课堂教学辅助项目，不做太多解释，如果有疑问可以加本人微信81677956讨论。做本实验，需要已经搭建好kubernetes集群和harbor服务。
 
-首先克隆本项目：git clone  https://git.coding.net/aminglinux/k8s_discuz.git
+首先克隆本项目：https://github.com/18654131180/k8s.git
 
 ####下载镜像
 ```
 docker pull mysql:5.7
-docker pull richarvey/nginx-php-fpm
+docker pull registry.cn-shanghai.aliyuncs.com/zhouyu-docker/nginx-php-fpm
 ```
 
 ####用dockerfile重建nginx-php-fpm镜像
 ```
-cd k8s_discuz/dz_web_dockerfile/
+cd k8s_ecshop/dz_web_dockerfile/
 docker build -t nginx-php .
 
 ```
@@ -20,11 +19,11 @@ docker build -t nginx-php .
 ####将镜像push到harbor
 ```
 ##登录harbor，并push新的镜像
-docker login harbor.yuankeedu.com  //输入正确的用户名和密码
-docker tag nginx-php  harbor.yuankeedu.com/aminglinux/nginx-php
-docker push harbor.yuankeedu.com/aminglinux/nginx-php
-docker tag mysql:5.7 harbor.yuankeedu.com/aminglinux/mysql:5.7
-docker push harbor.yuankeedu.com/aminglinux/mysql:5.7
+docker login 192.168.36.132 //输入正确的用户名和密码 admin/Harbor12345
+docker tag nginx-php 192.168.36.132/base/nginx-php
+docker push 192.168.36.132/base/nginx-php
+docker tag  mysql:5.7  192.168.36.132/base/mysql:5.7
+docker push 192.168.36.132/base/mysql:5.7
 ```
 
 ####搭建NFS
@@ -46,17 +45,17 @@ systemctl enable nfs
 ```
 * 创建目录
 ```
-mkdir -p  /data/k8s/discuz/{db,web}
+mkdir -p  /data/k8s/ecshop_web/{appserver,ecshop}
 ```
 
 ####搭建MySQL服务
 * 创建secret (设定mysql的root密码)
 ```
-kubectl create secret generic mysql-pass --from-literal=password=DzPasswd1
+kubectl create secret generic mysql-pass --from-literal=password=123456
 ```
 * 创建pv
 ```
-cd ../../k8s_discuz/mysql
+cd ../../k8s_ecshop/mysql
 kubectl create -f mysql-pv.yaml
 ```
 * 创建pvc
@@ -75,7 +74,7 @@ kubectl create -f mysql-svc.yaml
 ####搭建Nginx+php-fpm服务
 * 搭建pv
 ```
-cd ../../k8s_discuz/nginx_php
+cd ../../k8s_ecshop/nginx_php
 kubectl create -f web-pv.yaml
 ```
 * 创建pvc
@@ -90,21 +89,12 @@ kubectl create -f web-dp.yaml
 ```
 kubectl create -f web-svc.yaml
 ```
-####安装Discuz
-* 下载dz代码 (到NFS服务器上)
-```
-cd /tmp/
-git clone https://gitee.com/ComsenzDiscuz/DiscuzX.git
-cd /data/k8s/discuz/web/
-mv /tmp/DiscuzX/upload/* .
-chown -R 100 data uc_server/data/ uc_client/data/ config/
-```
 * 设置MySQL普通用户
 ```
 kubectl get svc dz-mysql //查看service的cluster-ip，我的是10.68.122.120
-mysql -uroot -h10.68.122.120 -pDzPasswd1  //这里的密码是在上面步骤中设置的那个密码
+mysql -uroot -h10.68.122.120 -p123456  //这里的密码是在上面步骤中设置的那个密码
 > create database dz;
-> grant all on dz.* to 'dz'@'%' identified by 'dz-passwd-123';
+> grant all on dz.* to 'dz'@'%' identified by '123456';
 ```
 * 设置Nginx代理
 ```
@@ -114,7 +104,7 @@ kubectl get svc dz-web //查看cluster-ip，我的ip是10.68.190.99
 nginx代理配置文件内容如下：
 server {
             listen 80;
-            server_name dz.yuankeedu.com;
+            server_name *.*.*;
 
             location / {
                 proxy_pass      http://10.68.190.99:80;
@@ -125,7 +115,6 @@ server {
 }
 ```
 
-* 安装Discuz
 ```
-做完Nginx代理，就可以通过node的IP来访问discuz了。
+做完Nginx代理，就可以通过node的IP来访问了。
 ```
