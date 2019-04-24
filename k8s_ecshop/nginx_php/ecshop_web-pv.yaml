@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ecshop-web-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+#    path: /data/k8s/ecshop_web/ecshop
+    path: /data/k8s/ecshop_web
+    server: 192.168.36.132
