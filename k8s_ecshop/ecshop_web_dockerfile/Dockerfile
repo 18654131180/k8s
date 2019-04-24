@@ -1,4 +1,4 @@
-FROM 192.168.36.132/base/nginx-php-fpm:v1
+FROM registry.cn-shanghai.aliyuncs.com/zhouyu-docker/nginx-php-fpm
 COPY localtime /etc/localtime
 RUN echo 'Asia/Shanghai' >/etc/timezone
 RUN rm -f /etc/nginx/nginx.conf
