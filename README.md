@@ -28,7 +28,7 @@ docker push 192.168.36.132/base/mysql:5.7
 
 ####搭建NFS
 
-假设kubernetes集群网段为172.7.5.0/24，本机IP为172.7.5.13
+测试环境kubernetes集群网段为192.168.36.0/24，本机IP为192.168.36.128
 * 安装包
 ```
 yum install nfs-utils
@@ -36,7 +36,7 @@ yum install nfs-utils
 * 编辑配置文件
 ```
 vim /etc/exportfs  //内容如下
-/data/k8s/ 172.7.5.0/24(sync,rw,no_root_squash)
+/data/k8s/ 192.168.36.0/24(sync,rw,no_root_squash)
 ```
 * 启动服务
 ```
